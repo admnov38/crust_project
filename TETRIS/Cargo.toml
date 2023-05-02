@@ -1,10 +1,10 @@
 [package]
-name = "tetris_2"
+name = "raylib_tetris_app"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-raylib = "3.5"
-rand = "0.8"
+raylib = { version = "3.7", git = "https://github.com/deltaphc/raylib-rs" }
+rand = "0.8.4"

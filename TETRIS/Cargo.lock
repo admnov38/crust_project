@@ -48,9 +48,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.142"
+version = "0.2.141"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a987beff54b60ffa6d51982e1aa1146bc42f19bd26be28b0586f252fccf5317"
+checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
 
 [[package]]
 name = "ppv-lite86"
@@ -91,8 +91,7 @@ dependencies = [
 [[package]]
 name = "raylib"
 version = "3.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb567269b7ea9ae3c4a5aab4dc95e0b4d8df2a49a25e1670a3bb17bc17504606"
+source = "git+https://github.com/deltaphc/raylib-rs#c828b549a97e89b4f6b5d6b0d2e8fbacee7b12ef"
 dependencies = [
  "cfg-if",
  "lazy_static",
@@ -103,8 +102,7 @@ dependencies = [
 [[package]]
 name = "raylib-sys"
 version = "3.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20c97b5e251b73c52183914d4756104cab401050f244c19abe83fa05a4e86840"
+source = "git+https://github.com/deltaphc/raylib-rs#c828b549a97e89b4f6b5d6b0d2e8fbacee7b12ef"
 dependencies = [
  "cc",
  "cmake",
@@ -112,7 +110,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tetris_2"
+name = "raylib_tetris_app"
 version = "0.1.0"
 dependencies = [
  "rand",
