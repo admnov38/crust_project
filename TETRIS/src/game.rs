@@ -153,6 +153,8 @@ impl Game {
     }
 
     pub fn draw(&self, handle: &mut RaylibDrawHandle) {
+        let score_text = format!("Score: {}", self.score);
+        handle.draw_text(&score_text, 100, 100, 28, Color::RED);
         handle.draw_rectangle_lines_ex(self.board, 2, self.colour);
         let mut curr_pos = Vector2::new(self.board.x, self.board.y); 
         for row in &self.game_state {
