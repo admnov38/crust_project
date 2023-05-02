@@ -34,40 +34,40 @@ impl Tetrimino {
                 [false, true, false, false],
             ],
             Tetrimino::O => &[
-                [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
+                [false, false, false, false],
+                [false, false, false, false],
+                [true, true, false, false],
+                [true, true, false, false],
             ],
             Tetrimino::T => &[
+                [false, false, false, false],
+                [false, false, false, false],
                 [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
+                [true, true, true, false],
             ],
             Tetrimino::J => &[
+                [false, false, false, false],
                 [false, true, false, false],
                 [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
+                [true, true, false, false],
             ],
             Tetrimino::L => &[
+                [false, false, false, false],
                 [false, true, false, false],
                 [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
+                [false, true, true, false],
             ],
             Tetrimino::S => &[
-                [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
+                [false, false, false, false],
+                [false, false, false, false],
+                [false, true, true, false],
+                [true, true, false, false],
             ],
             Tetrimino::Z => &[
-                [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
-                [false, true, false, false],
+                [false, false, false, false],
+                [false, false, false, false],
+                [true, true, false, false],
+                [false, true, true, false],
             ],
             // Add other tetrimino shapes here
         }
@@ -116,7 +116,7 @@ impl TetrisGame {
             current_piece_position: (GRID_WIDTH / 2 - 2, 0),
             current_piece_rotation: 0,
             last_fall_time: Instant::now(),
-            fall_interval: Duration::from_millis(500),
+            fall_interval: Duration::from_secs(1),
             score: 0,
             last_key_pressed: None,
             }
@@ -134,8 +134,8 @@ impl TetrisGame {
                 _ => (),
             }
         }
-    
-        if dx != 0 || dy != 0 || dr != 0 {
+
+        if dx != 0 || dr != 0 || dy != 0 || self.last_fall_time.elapsed() >= self.fall_interval {
             let previous_position = self.current_piece_position;
             let previous_rotation = self.current_piece_rotation;
             self.current_piece_position.0 += dx;
@@ -146,7 +146,7 @@ impl TetrisGame {
                 self.current_piece_position = previous_position;
                 self.current_piece_rotation = previous_rotation;
             }
-            if Instant::now() - self.last_fall_time > self.fall_interval {
+            if self.last_fall_time.elapsed() >= self.fall_interval {
                 self.current_piece_position.1 += 1;
                 if self.is_collision() {
                     self.current_piece_position.1 -= 1;
@@ -159,7 +159,9 @@ impl TetrisGame {
                 }
                 self.last_fall_time = Instant::now();
             }
+            self.last_fall_time = Instant::now();
         }
+        
     }
 
     
@@ -171,6 +173,8 @@ impl TetrisGame {
     }
     
     fn game_over(&mut self) {
+        println!("Game Over!\nYour score: {}", self.score);
+
         self.grid = [[false; GRID_HEIGHT as usize]; GRID_WIDTH as usize];
         self.score = 0;
     }
@@ -248,7 +252,7 @@ impl TetrisGame {
                     y: GRID_OFFSET.y + (y as i32 * CELL_SIZE) as f32,
                 };
                 if self.grid[x as usize][y as usize] {
-                    d.draw_rectangle_v(position, Vector2::new(CELL_SIZE as f32, CELL_SIZE as f32), COLOR_GRID);
+                    d.draw_rectangle_v(position, Vector2::new(CELL_SIZE as f32, CELL_SIZE as f32), Color::GREEN);
                 } else {
                     d.draw_rectangle_lines_ex(
                         Rectangle::new(position.x, position.y, CELL_SIZE as f32, CELL_SIZE as f32),
