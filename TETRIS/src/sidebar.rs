@@ -171,16 +171,31 @@ impl SideBar {
                 let content = self.content;
 
                 handle.draw_text("NEXT PIECE", rec_next_piece.x as i32, (rec_next_piece.y - 20.0) as i32, 20, Color::BLACK);
-                handle.draw_rectangle(rec_next_piece.x as i32, rec_next_piece.y as i32, rec_next_piece.width as i32, rec_next_piece.height as i32, Color::GRAY);
+                handle.draw_rectangle_rec(rec_next_piece, Color::WHITE);
+                handle.draw_rectangle_lines(rec_next_piece.x as i32, rec_next_piece.y as i32, rec_next_piece.width as i32, rec_next_piece.height as i32, Color::LIGHTGRAY);
+
+                let mut ref_pos = Vector2::new(rec_next_piece.x + (rec_next_piece.width / 2.0) - 50.0, 
+                                                        rec_next_piece.y + (rec_next_piece.height / 2.0) - 50.0);
+                for row in self.game.next_piece.get_shape() {
+                    for val in row {
+                        if val {
+                            handle.draw_rectangle(ref_pos.x as i32, ref_pos.y as i32, 32, 32, self.game.next_piece.color);
+                        }
+                        ref_pos.x += 32.0;
+                    }
+                    ref_pos.y += 32.0;
+                    ref_pos.x = rec_next_piece.x + (rec_next_piece.width / 2.0) - 50.0;
+                }
 
                 handle.draw_text(&format!("SCORE (current highscore: {})", curr_score), rec_score.x as i32, (rec_score.y - 20.0) as i32, 20, Color::BLACK);
-                handle.draw_rectangle(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::GRAY);
-                handle.draw_text(&format!("{}", self.game.score), rec_score.x as i32, rec_score.y as i32, 28, Color::RED);
-
+                handle.draw_rectangle_rec(rec_score, Color::WHITE);
+                handle.draw_rectangle_lines(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::LIGHTGRAY);
+                handle.draw_text(&format!("{}", self.game.score), rec_score.x as i32 + 10, rec_score.y as i32 + 10, 28, Color::BLACK);
 
                 handle.draw_text("LEVEL", rec_level.x as i32, (rec_level.y - 20.0) as i32, 20, Color::BLACK);
-                handle.draw_rectangle(rec_level.x as i32, rec_level.y as i32, rec_level.width as i32, rec_level.height as i32, Color::GRAY);
-                handle.draw_text(&format!("{}", self.game.level), rec_level.x as i32, rec_level.y as i32, 28, Color::RED);
+                handle.draw_rectangle_rec(rec_level, Color::WHITE);
+                handle.draw_rectangle_lines(rec_level.x as i32, rec_level.y as i32, rec_level.width as i32, rec_level.height as i32, Color::LIGHTGRAY);
+                handle.draw_text(&format!("{}", self.game.level), rec_level.x as i32 + 10, rec_level.y as i32 + 10, 28, Color::BLACK);
 
 
                 let lbl_butt_quit = CString::new("QUIT GAME").unwrap();    
@@ -192,20 +207,48 @@ impl SideBar {
             },
             SideBarContent::ModernGame { rec_next_piece, rec_score, rec_level, rec_swap_piece, button_quit, curr_score} => {
                 let content = self.content;
-
                 handle.draw_text("NEXT PIECE", rec_next_piece.x as i32, (rec_next_piece.y - 20.0) as i32, 20, Color::BLACK);
-                handle.draw_rectangle(rec_next_piece.x as i32, rec_next_piece.y as i32, rec_next_piece.width as i32, rec_next_piece.height as i32, Color::GRAY);
+                handle.draw_rectangle_rec(rec_next_piece, Color::WHITE);
+
+                let mut ref_pos = Vector2::new(rec_next_piece.x + (rec_next_piece.width / 2.0) - 50.0, 
+                                                        rec_next_piece.y + (rec_next_piece.height / 2.0) - 50.0);
+                for row in self.game.next_piece.get_shape() {
+                    for val in row {
+                        if val {
+                            handle.draw_rectangle(ref_pos.x as i32, ref_pos.y as i32, 32, 32, self.game.next_piece.color);
+                        }
+                        ref_pos.x += 32.0;
+                    }
+                    ref_pos.y += 32.0;
+                    ref_pos.x = rec_next_piece.x + (rec_next_piece.width / 2.0) - 50.0;
+                }
 
                 handle.draw_text(&format!("SCORE (current highscore: {})", curr_score), rec_score.x as i32, (rec_score.y - 20.0) as i32, 20, Color::BLACK);
-                handle.draw_rectangle(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::GRAY);
-                handle.draw_text(&format!("{}", self.game.score), rec_score.x as i32, rec_score.y as i32, 28, Color::RED);
+                handle.draw_rectangle_rec(rec_score, Color::WHITE);
+                handle.draw_rectangle_lines(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::LIGHTGRAY);
+                handle.draw_text(&format!("{}", self.game.score), rec_score.x as i32 + 10, rec_score.y as i32 + 10, 28, Color::BLACK);
 
                 handle.draw_text("LEVEL", rec_level.x as i32, (rec_level.y - 20.0) as i32, 20, Color::BLACK);
-                handle.draw_rectangle(rec_level.x as i32, rec_level.y as i32, rec_level.width as i32, rec_level.height as i32, Color::GRAY);
-                handle.draw_text(&format!("{}", self.game.level), rec_level.x as i32, rec_level.y as i32, 28, Color::RED);
+                handle.draw_rectangle_rec(rec_level, Color::WHITE);
+                handle.draw_rectangle_lines(rec_level.x as i32, rec_level.y as i32, rec_level.width as i32, rec_level.height as i32, Color::LIGHTGRAY);
+                handle.draw_text(&format!("{}", self.game.level), rec_level.x as i32 + 10, rec_level.y as i32 + 10, 28, Color::BLACK);
 
                 handle.draw_text("SWAP PIECE", rec_swap_piece.x as i32, (rec_swap_piece.y - 20.0) as i32, 20, Color::BLACK);
-                handle.draw_rectangle(rec_swap_piece.x as i32, rec_swap_piece.y as i32, rec_swap_piece.width as i32, rec_swap_piece.height as i32, Color::GRAY);
+                handle.draw_rectangle_rec(rec_swap_piece, Color::WHITE);
+                handle.draw_rectangle_lines(rec_swap_piece.x as i32, rec_swap_piece.y as i32, rec_swap_piece.width as i32, rec_swap_piece.height as i32, Color::LIGHTGRAY);
+
+                let mut ref_pos = Vector2::new(rec_swap_piece.x + (rec_swap_piece.width / 2.0) - 50.0, 
+                                                     rec_swap_piece.y + (rec_swap_piece.height / 2.0) - 50.0);
+                for row in self.game.swap_piece.get_shape() {
+                    for val in row {
+                        if val {
+                            handle.draw_rectangle(ref_pos.x as i32, ref_pos.y as i32, 32, 32, self.game.swap_piece.color);
+                        }
+                        ref_pos.x += 32.0;
+                    }
+                    ref_pos.y += 32.0;
+                    ref_pos.x = rec_swap_piece.x + (rec_swap_piece.width / 2.0) - 50.0;
+                }
 
                 let lbl_butt_quit = CString::new("QUIT GAME").unwrap();    
                 if handle.gui_button(button_quit, Some(&lbl_butt_quit)) {

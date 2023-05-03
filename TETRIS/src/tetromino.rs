@@ -12,6 +12,7 @@ pub enum TetrominoShape {
     Z
 }
 
+#[derive(Clone, Copy)]
 pub struct Tetromino {
     pub tetormino_type: TetrominoShape,
     pub shapes: [[[bool; 4]; 4]; 4],
@@ -74,9 +75,9 @@ impl Tetromino {
             },
             TetrominoShape::O => {
                 let top_b = [
+                    [false, true,  true,  false],
+                    [false, true,  true,  false],
                     [false, false, false, false],
-                    [false, true, true, false],
-                    [false, true, true, false],
                     [false, false, false, false],
                 ];
             
@@ -221,9 +222,9 @@ impl Tetromino {
                     [false, false, false, false],
                 ];
                 let right_b = [
-                    [false, false, true, false],
-                    [false, true,  true, false],
                     [false, true,  false, false],
+                    [true,  true,  false, false],
+                    [true,  false, false, false],
                     [false, false, false, false],
                 ];
 

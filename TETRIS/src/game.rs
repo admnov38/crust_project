@@ -1,6 +1,6 @@
-use std::{time::{Instant, Duration}, cell};
+use std::{time::{Instant, Duration}, cell, mem};
 
-use raylib::prelude::*;
+use raylib::{prelude::*, ffi::ColorAlpha};
 
 use crate::tetromino::Tetromino;
 
@@ -11,8 +11,11 @@ pub enum Mode {
 
 pub struct Game {
     pub board: Rectangle, 
+    pub mode: Mode,
     pub spawn_point: Vector2,
-    curr_piece: Tetromino, 
+    pub curr_piece: Tetromino, 
+    pub next_piece: Tetromino, 
+    pub swap_piece: Tetromino, 
     game_state: Vec<Vec<bool>>,
     colour: Color,
     last_fall_time: Instant,
@@ -31,20 +34,22 @@ impl Game {
 
         let game_board = Rectangle::new(
                             (handle.get_screen_width() as f32 * 0.75) / 2.0 - board_dim.x * block_size as f32 / 2.0 as f32,
-                            board_dim.y,
+                            50.0,
                             board_dim.x * block_size as f32,
                             board_dim.y * block_size as f32
                         );
-
 
         let game_state = vec![vec![false; board_dim.x as usize]; board_dim.y as usize];
         let spawn_point = Vector2::new((board_dim.x as i32 / 2 - 2) as f32, 0.0);
         Game { 
             board: game_board, 
+            mode: mode,
             spawn_point: spawn_point, 
             game_state: game_state,
-            colour: Color::RED,
+            colour: Color::LIGHTGRAY,
             curr_piece: Tetromino::random(spawn_point),
+            next_piece: Tetromino::random(spawn_point),
+            swap_piece: Tetromino::random(spawn_point),
             last_fall_time: Instant::now(),
             score: 0,
             level: level,
@@ -114,7 +119,10 @@ impl Game {
                     self.curr_piece.pos.y -= 1.0;
                     self.lock_piece();
                     self.clear_lines();
-                    self.curr_piece = Tetromino::random(self.spawn_point);
+                    
+                    self.curr_piece = self.next_piece;
+                    self.next_piece = Tetromino::random(self.spawn_point);
+
                     if self.is_collision(shape, self.curr_piece.pos) {
                         self.game_over();
                     }
@@ -129,11 +137,29 @@ impl Game {
                         self.curr_piece.pos.y -= 1.0;
                         self.lock_piece();
                         self.clear_lines();
-                        self.curr_piece = Tetromino::random(self.spawn_point);
+    
+                        self.curr_piece = self.next_piece;
+                        self.next_piece = Tetromino::random(self.spawn_point);
+
                         if self.is_collision(shape, self.curr_piece.pos) {
                             self.game_over();
                         }
                     }
+                },
+                KeyboardKey::KEY_T => {
+                    if !self.is_running {
+                        return
+                    }
+                    match self.mode {
+                        Mode::Classic => return,
+                        Mode::Modern => {
+                            let tmp_piece = self.curr_piece;
+                            self.curr_piece = self.swap_piece;
+                            self.curr_piece.pos = tmp_piece.pos;  
+                            self.swap_piece = tmp_piece;
+                        }
+                    }
+
                 },
                 KeyboardKey::KEY_P => {
                     self.is_running = !self.is_running;
@@ -155,7 +181,8 @@ impl Game {
                 self.curr_piece.pos.y -= 1.0;
                 self.lock_piece();
                 self.clear_lines();
-                self.curr_piece = Tetromino::random(self.spawn_point);
+                self.curr_piece = self.next_piece;
+                self.next_piece = Tetromino::random(self.spawn_point);
                 if self.is_collision(shape, self.curr_piece.pos) {
                     self.game_over();
                 }
@@ -223,6 +250,13 @@ impl Game {
 
     pub fn draw(&self, handle: &mut RaylibDrawHandle) {
 
+        if !self.is_running {
+            handle.draw_text("P - play", 10, handle.get_screen_height() - 30, 20, Color::LIGHTGRAY)
+        }
+        else {
+            handle.draw_text("P - pause", 10, handle.get_screen_height() - 30, 20, Color::LIGHTGRAY)
+        }
+
         handle.draw_rectangle_lines_ex(self.board, 2, self.colour);
 
         let cell_size = 32;
@@ -233,7 +267,7 @@ impl Game {
                 self.board.y as i32, 
                 (self.board.x as i32 + i * cell_size) as i32,
                 (self.board.y + self.board.height) as i32,
-                Color::RED
+                self.colour
             );
         }
         for i in 0..(self.board.height as i32 / cell_size) {
@@ -242,14 +276,14 @@ impl Game {
                 (self.board.y as i32 + i * cell_size) as i32,
                 (self.board.x + self.board.width) as i32, 
                 (self.board.y as i32 + i * cell_size) as i32, 
-                Color::RED);
+                self.colour);
         }
 
         let mut curr_pos = Vector2::new(self.board.x, self.board.y); 
         for row in &self.game_state {
             for val in row {
                 if *val {
-                    handle.draw_rectangle(curr_pos.x as i32, curr_pos.y as i32, 32, 32, Color::GRAY);
+                    handle.draw_rectangle(curr_pos.x as i32, curr_pos.y as i32, 32, 32, self.colour);
                 }
                 curr_pos.x += 32.0;
             }
