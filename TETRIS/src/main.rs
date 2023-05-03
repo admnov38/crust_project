@@ -20,10 +20,15 @@ fn main() {
     let mut side_bar = SideBar::new(&rl);
     let mut gameboard = Game::new(&rl, game::Mode::Classic, 32);
 
+    let mut ra = RaylibAudio::init_audio_device();
+    let mut music = Music::load_music_stream(&thread, "theme.mp3").unwrap();
+    ra.play_music_stream(&mut music);
+
     while !rl.window_should_close() {
+        ra.update_music_stream(&mut music);
+
         let kkt= handle_input(&mut rl);
         let mut d = rl.begin_drawing(&thread);
-
 
         d.gui_set_style(raylib::consts::GuiControl::DEFAULT, 
             raylib::consts::GuiDefaultProperty::TEXT_SIZE as i32, 20);

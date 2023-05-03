@@ -46,12 +46,13 @@ impl ScoreBoard {
     }
 
     pub fn format_highscores(&mut self, delimiter: &str) {
-        let formatted = self.highscores
+        let mut formatted = self.highscores
                             .iter()
                             .map(|highscore| format!("{}: {}", highscore.username, highscore.score))
                             .collect::<Vec<_>>()
                             .join(delimiter);
 
+        if formatted == "" { formatted = "no highscores yet".to_owned(); }
         self.formatted_highscores = CString::new(formatted).unwrap();
     }
 
@@ -87,12 +88,15 @@ impl ScoreBoard {
         Ok(())
     }
 
-    pub fn get_users_highscore(&self, username: &str) -> Option<i32> {
-        if let Some(highscore) = self.highscores.iter().find(|h| h.username == username) {
-            Some(highscore.score)
-        } else {
-            None
+    pub fn get_users_highscore(&self, username: &str) -> i32 {
+        for user_score in &self.highscores {
+            let mut user_score_bytes: [u8; 64] = [0; 64];
+            user_score_bytes[..user_score.username.len()].copy_from_slice(user_score.username.as_bytes());
+            if username == std::str::from_utf8(&user_score_bytes).unwrap() {
+                return user_score.score;
+            }
         }
+        0
     }
 
 }
