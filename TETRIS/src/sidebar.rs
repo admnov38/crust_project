@@ -4,6 +4,8 @@ use std::ffi::CString;
 
 use crate::scoreboard::{ScoreBoard};
 #[derive(Clone, Copy)]
+
+
 pub enum SideBarContent {
     MainView{      
         butt_new_game: Rectangle, 
@@ -15,7 +17,6 @@ pub enum SideBarContent {
         curr_level: i32,
         curr_mode: i32,
         tb_username: Rectangle,
-        edit_mode: bool,
         text: [u8; 64],
         cb_level: Rectangle,
         cb_mode: Rectangle
@@ -28,14 +29,16 @@ pub enum SideBarContent {
         rec_next_piece: Rectangle,
         rec_score: Rectangle,
         rec_level: Rectangle,
-        button_quit: Rectangle
+        button_quit: Rectangle,
+        curr_score: i32
     },
     ModernGame{ 
         rec_next_piece: Rectangle,
         rec_score: Rectangle,
         rec_level: Rectangle,
         rec_swap_piece: Rectangle,
-        button_quit: Rectangle
+        button_quit: Rectangle,
+        curr_score: i32
     }
 }
 
@@ -43,14 +46,15 @@ pub struct SideBar {
     rec: Rectangle, 
     padding: f32, 
     colour: Color,
-    content: SideBarContent
+    content: SideBarContent,
+    edit_mode: bool
 }
 
 impl SideBar {
 
     pub fn new(handle: &RaylibHandle) -> SideBar {
         let rec = Rectangle::new(handle.get_screen_width() as f32 * 0.75, 0.0, 
-                                        handle.get_screen_width() as f32 * 0.25 as f32, handle.get_screen_height() as f32);
+                                 handle.get_screen_width() as f32 * 0.25 as f32, handle.get_screen_height() as f32);
 
         let padding = 10.0;
         let content = Self::set_main_game_view(padding, &rec);
@@ -59,9 +63,9 @@ impl SideBar {
             rec: rec,
             padding: padding,
             colour: Color::LIGHTCYAN,
-            content: content
+            content: content,
+            edit_mode: false
         }
-
     }
 
     fn set_colour(&mut self, colour: Color) {
@@ -90,7 +94,7 @@ impl SideBar {
             },
             SideBarContent::InitGame { butt_back, butt_start, 
                                        cb_level, cb_mode, 
-                                       tb_username, mut edit_mode, ref mut text, 
+                                       tb_username, ref mut text, 
                                        ref mut curr_level , ref mut curr_mode } => {
                 
                 let lbl_butt_back = CString::new("BACK").unwrap();
@@ -116,20 +120,20 @@ impl SideBar {
                     *curr_mode = active_mode;
                 }
 
-                let mut username = "";
                 handle.draw_text("USERNAME", tb_username.x as i32, (tb_username.y - 30.0) as i32, 20, Color::BLACK);
-                if handle.gui_text_box(tb_username, text, edit_mode) {
-                    edit_mode = !edit_mode;
-                    username = std::str::from_utf8(text).unwrap().trim_end_matches(char::from(0));
+                if handle.gui_text_box(tb_username, text, self.edit_mode) {
+                    self.edit_mode = !self.edit_mode;
                 }
-
+                
                 let lbl_butt_start = CString::new("START GAME").unwrap();
                 if handle.gui_button(butt_start, Some(&lbl_butt_start) ) {
+                    let username = std::str::from_utf8(text).unwrap();
+                    let curr_score = scoreboard.get_users_highscore(&username);
                     if *curr_mode == 0 {
-                        self.content = Self::set_classic_game_view(self.padding, &self.rec, &username, *curr_level);
+                        self.content = Self::set_classic_game_view(self.padding, &self.rec, &username, *curr_level, curr_score);
                     }
                     else {
-                        self.content = Self::set_modern_game_view(self.padding, &self.rec, &username, *curr_level);
+                        self.content = Self::set_modern_game_view(self.padding, &self.rec, &username, *curr_level, curr_score);
                     }
                     return self;
                 }
@@ -154,13 +158,13 @@ impl SideBar {
                 }
                 content
             },
-            SideBarContent::ClassicGame { rec_next_piece, rec_score, rec_level, button_quit} => {            
+            SideBarContent::ClassicGame { rec_next_piece, rec_score, rec_level, button_quit, curr_score} => {            
                 let content = self.content;
 
                 handle.draw_text("NEXT PIECE", rec_next_piece.x as i32, (rec_next_piece.y - 20.0) as i32, 20, Color::BLACK);
                 handle.draw_rectangle(rec_next_piece.x as i32, rec_next_piece.y as i32, rec_next_piece.width as i32, rec_next_piece.height as i32, Color::GRAY);
 
-                handle.draw_text("SCORE", rec_score.x as i32, (rec_score.y - 20.0) as i32, 20, Color::BLACK);
+                handle.draw_text(&format!("SCORE (current highscore: {})", curr_score), rec_score.x as i32, (rec_score.y - 20.0) as i32, 20, Color::BLACK);
                 handle.draw_rectangle(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::GRAY);
 
                 handle.draw_text("LEVEL", rec_level.x as i32, (rec_level.y - 20.0) as i32, 20, Color::BLACK);
@@ -174,12 +178,33 @@ impl SideBar {
                 }
                 content
             },
-            SideBarContent::ModernGame { rec_next_piece, rec_score, rec_level, rec_swap_piece, button_quit} => todo!(),
-        };
+            SideBarContent::ModernGame { rec_next_piece, rec_score, rec_level, rec_swap_piece, button_quit, curr_score} => {
+                let content = self.content;
 
+                handle.draw_text("NEXT PIECE", rec_next_piece.x as i32, (rec_next_piece.y - 20.0) as i32, 20, Color::BLACK);
+                handle.draw_rectangle(rec_next_piece.x as i32, rec_next_piece.y as i32, rec_next_piece.width as i32, rec_next_piece.height as i32, Color::GRAY);
+
+                handle.draw_text(&format!("SCORE (current highscore: {})", curr_score), rec_score.x as i32, (rec_score.y - 20.0) as i32, 20, Color::BLACK);
+                handle.draw_rectangle(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::GRAY);
+
+                handle.draw_text("LEVEL", rec_level.x as i32, (rec_level.y - 20.0) as i32, 20, Color::BLACK);
+                handle.draw_rectangle(rec_level.x as i32, rec_level.y as i32, rec_level.width as i32, rec_level.height as i32, Color::GRAY);
+
+                handle.draw_text("SWAP PIECE", rec_swap_piece.x as i32, (rec_swap_piece.y - 20.0) as i32, 20, Color::BLACK);
+                handle.draw_rectangle(rec_swap_piece.x as i32, rec_swap_piece.y as i32, rec_swap_piece.width as i32, rec_swap_piece.height as i32, Color::GRAY);
+
+                let lbl_butt_quit = CString::new("QUIT GAME").unwrap();    
+                if handle.gui_button(button_quit, Some(&lbl_butt_quit)) {
+                    self.content = Self::set_main_game_view(self.padding, &self.rec);
+                    return self;
+                }
+                content
+            },
+        };
         return self
         
     }
+
 
     fn set_main_game_view(padding: f32, rec: &Rectangle) -> SideBarContent {
 
@@ -195,6 +220,7 @@ impl SideBar {
             button_high_score: button_high_score 
         }       
     }
+
 
     fn set_init_game_view(padding: f32, rec: &Rectangle) -> SideBarContent {
 
@@ -225,11 +251,11 @@ impl SideBar {
                                    cb_level: comobox_level, 
                                    cb_mode: combobox_mode,
                                    tb_username: textbox_username, 
-                                   edit_mode: true,
                                    text: text,
                                    curr_level: -1, 
                                    curr_mode: -1 }
     }
+
 
     fn set_highscore_game_view(padding: f32, rec: &Rectangle) -> SideBarContent {
 
@@ -244,17 +270,17 @@ impl SideBar {
         SideBarContent::HighScore { list_scores: list_scores, butt_back: button_back } 
     }
 
-    fn set_classic_game_view(padding: f32, rec: &Rectangle, username: &str, starting_level: i32) -> SideBarContent {
+    fn set_classic_game_view(padding: f32, rec: &Rectangle, username: &str, starting_level: i32, curr_score: i32) -> SideBarContent {
 
-        let rec_next_piece = Rectangle::new(rec.x + padding, rec.y + padding + 50.0, 
+        let rec_next_piece = Rectangle::new(rec.x + padding, rec.y + padding + 70.0, 
                                                    rec.width - 2.0  * padding, 
-                                                  100.0);
+                                                  200.0);
 
-        let rec_score = Rectangle::new(rec.x + padding, rec.y + 2.0 * padding + 150.0, 
+        let rec_score = Rectangle::new(rec.x + padding, rec.y + 2.0 * padding + 290.0, 
                                                    rec.width - 2.0  * padding, 
                                                   50.0);
 
-        let rec_level = Rectangle::new(rec.x + padding, rec.y + 3.0 *padding + 200.0, 
+        let rec_level = Rectangle::new(rec.x + padding, rec.y + 3.0 * padding + 360.0, 
                                                    rec.width - 2.0  * padding, 
                                                   50.0);
 
@@ -265,12 +291,41 @@ impl SideBar {
         SideBarContent::ClassicGame { rec_next_piece: rec_next_piece, 
                                       rec_score: rec_score, 
                                       rec_level: rec_level, 
-                                      button_quit: button_quit }
+                                      button_quit: button_quit,
+                                      curr_score: curr_score
+                                     }
     }
 
-    fn set_modern_game_view(padding: f32, rec: &Rectangle, username: &str, starting_level: i32) -> SideBarContent {
 
-        todo!()
+    fn set_modern_game_view(padding: f32, rec: &Rectangle, username: &str, starting_level: i32, curr_score: i32) -> SideBarContent {
+
+        let rec_next_piece = Rectangle::new(rec.x + padding, rec.y + padding + 70.0, 
+                                                   rec.width - 2.0  * padding, 
+                                                  200.0);
+
+        let rec_score = Rectangle::new(rec.x + padding, rec.y + 2.0 * padding + 290.0, 
+                                                   rec.width - 2.0  * padding, 
+                                                  50.0);
+
+        let rec_level = Rectangle::new(rec.x + padding, rec.y + 3.0 * padding + 360.0, 
+                                                   rec.width - 2.0  * padding, 
+                                                  50.0);
+
+        let button_quit = Rectangle::new(rec.x + padding, rec.height - padding - 50.0, 
+                                                rec.width - 2.0  * padding, 
+                                               50.0);
+
+        let rec_swap_piece = Rectangle::new(rec.x + padding, rec.y + 3.0 * padding + 440.0, 
+                                                     rec.width - 2.0  * padding, 
+                                                    200.0);
+
+        SideBarContent::ModernGame { rec_next_piece: rec_next_piece, 
+                                     rec_score: rec_score, 
+                                     rec_level: rec_level, 
+                                     rec_swap_piece: rec_swap_piece,
+                                     button_quit: button_quit,
+                                     curr_score: curr_score
+                                    }
     }
 
 
