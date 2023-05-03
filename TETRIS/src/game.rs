@@ -3,7 +3,7 @@ use std::{time::{Instant, Duration}};
 use raylib::{prelude::*, ffi::ColorAlpha};
 
 use crate::{tetromino::Tetromino, scoreboard::{self, ScoreBoard}};
-
+#[derive(Clone, Copy)]
 pub enum Mode {
     Classic,
     Modern
@@ -12,6 +12,7 @@ pub enum Mode {
 pub struct Game {
     pub board: Rectangle, 
     pub mode: Mode,
+    pub block_size: i32,
     pub spawn_point: Vector2,
     pub curr_piece: Tetromino, 
     pub next_piece: Tetromino, 
@@ -23,7 +24,8 @@ pub struct Game {
     pub level: u32,
     pub username: String,
     lines: u32,
-    is_running: bool
+    is_running: bool,
+    pub is_over: bool
 }
 
 impl Game {
@@ -45,6 +47,7 @@ impl Game {
         Game { 
             board: game_board, 
             mode: mode,
+            block_size: block_size,
             spawn_point: spawn_point, 
             game_state: game_state,
             colour: Color::LIGHTGRAY,
@@ -56,11 +59,12 @@ impl Game {
             level: level,
             lines: 0,
             is_running: false,
+            is_over: false,
             username: username.to_owned()
         }
     }   
 
-    pub fn update(&mut self, input: Option<KeyboardKey>) {    
+    pub fn update(&mut self, input: Option<KeyboardKey>, handle: &mut RaylibDrawHandle) {    
 
         if let Some(key) = input {
             match key {
@@ -118,7 +122,7 @@ impl Game {
                     self.next_piece = Tetromino::random(self.spawn_point);
 
                     if self.is_collision(shape, self.curr_piece.pos) {
-                        self.game_over();
+                        self.game_over(handle);
                     }
                 },
                 KeyboardKey::KEY_DOWN => {
@@ -136,7 +140,7 @@ impl Game {
                         self.next_piece = Tetromino::random(self.spawn_point);
 
                         if self.is_collision(shape, self.curr_piece.pos) {
-                            self.game_over();
+                            self.game_over(handle);
                         }
                     }
                 },
@@ -157,6 +161,10 @@ impl Game {
                 },
                 KeyboardKey::KEY_P => {
                     self.is_running = !self.is_running;
+
+                    if self.is_over {
+                        *self = Game::new(handle, self.mode, self.level, self.block_size, &self.username);
+                    }
                 }
                 _ => (),
             }
@@ -178,15 +186,16 @@ impl Game {
                 self.curr_piece = self.next_piece;
                 self.next_piece = Tetromino::random(self.spawn_point);
                 if self.is_collision(shape, self.curr_piece.pos) {
-                    self.game_over();
+                    self.game_over(handle);
                 }
             }
             self.last_fall_time = Instant::now();
         }
     }
 
-    fn game_over(&mut self) {
+    fn game_over(&mut self, handle: &mut RaylibDrawHandle) {
         self.is_running = false;
+        self.is_over = true;
     }
 
     fn is_collision(&self, shape: [[bool; 4]; 4], pos: Vector2) -> bool {
@@ -297,5 +306,11 @@ impl Game {
             curr_pos.y += 32.0;
             curr_pos.x = ref_pos.x + self.curr_piece.pos.x * 32.0;
         }
+
+        if self.is_over {
+            handle.draw_text("GAME OVER", 350, handle.get_screen_height() / 2 - 30, 70, Color::FIREBRICK);       
+            handle.draw_text(&format!("score: {}", self.score), (handle.get_screen_width() as f32 * 0.75) as i32 / 2 - 60, handle.get_screen_height() / 2 + 50, 30, Color::FIREBRICK);       
+        }
+
     }
 }

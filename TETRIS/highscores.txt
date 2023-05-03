@@ -1,2 +1,4 @@
-DUSAN: 160
-: 0
+MONIKA: 200
+DUSAN: 120
+ADAM: 80
+unknown: 80

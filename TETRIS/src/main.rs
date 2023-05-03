@@ -21,6 +21,8 @@ fn  main() {
     let mut music = Music::load_music_stream(&thread, "theme.mp3").unwrap();
     ra.play_music_stream(&mut music);
 
+    rl.set_window_icon(raylib::core::texture::Image::load_image("tetris.png").unwrap());
+
     while !rl.window_should_close() {
         ra.update_music_stream(&mut music);
         
@@ -39,10 +41,10 @@ fn  main() {
         side_bar = side_bar.draw(&mut d, &mut scoreboard);
         
         if side_bar.game_started {
-            side_bar.game.update(input);
+            side_bar.game.update(input, &mut d);
             side_bar.game.draw(&mut d);
         }
-        else {
+        if side_bar.game.is_over {
             if side_bar.game.score != 0 {
                 scoreboard.update_highscore(&side_bar.game.username, side_bar.game.score as i32);
             }

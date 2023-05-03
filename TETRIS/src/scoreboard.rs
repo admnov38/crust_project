@@ -58,7 +58,10 @@ impl ScoreBoard {
 
     pub fn update_highscore(&mut self, username: &str, score: i32) -> ScoreUpdated {
         let mut result = ScoreUpdated::NewHighScore;
-        let uname: String = username.chars().filter(|&c| c != '\0').collect();
+        let mut uname: String = username.chars().filter(|&c| c != '\0').collect();
+        if uname == "" {
+            uname = "unknown".to_owned();
+        }
         if let Some(highscore) = self.highscores.iter_mut().find(|highscore| highscore.username == uname) {
             if score > highscore.score {
                 highscore.score = score;
