@@ -67,7 +67,7 @@ impl Tetromino {
                 
                 return Tetromino {
                     tetormino_type: tetromino_type,
-                    shapes: [top_b, right_b, left_b, top_b],
+                    shapes: [top_b, right_b, top_b, right_b],
                     orientation: 0,
                     color: Color::FIREBRICK,
                     pos: pos,

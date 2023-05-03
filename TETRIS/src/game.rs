@@ -1,8 +1,8 @@
-use std::{time::{Instant, Duration}, cell, mem};
+use std::{time::{Instant, Duration}};
 
 use raylib::{prelude::*, ffi::ColorAlpha};
 
-use crate::tetromino::Tetromino;
+use crate::{tetromino::Tetromino, scoreboard::{self, ScoreBoard}};
 
 pub enum Mode {
     Classic,
@@ -21,12 +21,13 @@ pub struct Game {
     last_fall_time: Instant,
     pub score: u32,
     pub level: u32,
+    pub username: String,
     lines: u32,
     is_running: bool
 }
 
 impl Game {
-    pub fn new(handle: &RaylibHandle, mode: Mode, level: u32, block_size: i32) -> Game {
+    pub fn new(handle: &RaylibHandle, mode: Mode, level: u32, block_size: i32, username: &str) -> Game {
         let board_dim: Vector2 = match mode {
             Mode::Classic => { Vector2::new(10 as f32 , 20 as f32) },
             Mode::Modern => { Vector2::new(15 as f32, 20 as f32) }
@@ -55,16 +56,9 @@ impl Game {
             level: level,
             lines: 0,
             is_running: false,
+            username: username.to_owned()
         }
     }   
-
-    fn start(&mut self) {
-        self.is_running = true;
-    }
-    
-    fn pause(&mut self) {
-        self.is_running = false;
-    }
 
     pub fn update(&mut self, input: Option<KeyboardKey>) {    
 
@@ -191,8 +185,8 @@ impl Game {
         }
     }
 
-    fn game_over(&self) {
-        todo!();
+    fn game_over(&mut self) {
+        self.is_running = false;
     }
 
     fn is_collision(&self, shape: [[bool; 4]; 4], pos: Vector2) -> bool {
@@ -242,7 +236,7 @@ impl Game {
         for i in 0..4 {
             for j in 0..4 {
                 if shape[i as usize][j as usize] {
-                    self.game_state[(self.curr_piece.pos.y as i32 + i) as usize][(self.curr_piece.pos.x as i32 + j) as usize] = true;
+                    self.game_state[std::cmp::max(self.curr_piece.pos.y as i32 + i, 0) as usize][(self.curr_piece.pos.x as i32 + j) as usize] = true;
                 }
             }
         }

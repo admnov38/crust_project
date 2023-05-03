@@ -1,3 +1,4 @@
+use raylib::ffi::GuiTextBox;
 use raylib::prelude::*;
 use raylib::{rgui::RaylibDrawGui};
 use std::ffi::CString;
@@ -62,7 +63,7 @@ impl SideBar {
 
         let padding = 10.0;
         let content = Self::set_main_game_view(padding, &rec);
-        let mut gameboard = Game::new(handle, game::Mode::Modern, 1, 32);
+        let mut gameboard = Game::new(handle, game::Mode::Modern, 1, 32, "");
         
         return SideBar{
             rec: rec,
@@ -83,13 +84,11 @@ impl SideBar {
 
                 let lbl_butt_new_game = CString::new("NEW GAME").unwrap();
                 if handle.gui_button(butt_new_game, Some(&lbl_butt_new_game) ) {
-                    // println!("Starting new game!");  
                     self.content = Self::set_init_game_view(self.padding, &self.rec);
                 }
                 
                 let lbl_butt_high_score = CString::new("HIGH SCORES").unwrap();
                 if handle.gui_button(button_high_score, Some(&lbl_butt_high_score)) {
-                    // println!("Showing high score!");
                     self.content = Self::set_highscore_game_view(self.padding, &self.rec);
                 }
                 
@@ -102,7 +101,6 @@ impl SideBar {
                 
                 let lbl_butt_back = CString::new("BACK").unwrap();
                 if handle.gui_button(butt_back, Some(&lbl_butt_back) ) {
-                    // println!("GOING BACK TO MAIN VIEW");
                     self.content = Self::set_main_game_view(self.padding, &self.rec);
                     return self;
                 }
@@ -122,19 +120,21 @@ impl SideBar {
                 }
 
                 handle.draw_text("USERNAME", tb_username.x as i32, (tb_username.y - 30.0) as i32, 20, Color::BLACK);
+                
                 if handle.gui_text_box(tb_username, text, self.edit_mode) {
                     self.edit_mode = !self.edit_mode;
                 }
                 
                 let lbl_butt_start = CString::new("START GAME").unwrap();
-                if handle.gui_button(butt_start, Some(&lbl_butt_start) ) {
-                    let username = std::str::from_utf8(text).unwrap();
+
+                if handle.gui_button(butt_start, Some(&lbl_butt_start)) {
+                    let username = std::str::from_utf8(text).unwrap().to_owned().clone();
                     let curr_score = scoreboard.get_users_highscore(&username);
                     if *curr_mode == 0 {
-                        self.content = Self::set_classic_game_view(self.padding, &self.rec, &username, *curr_level, curr_score);
+                        self.content = Self::set_classic_game_view(self.padding, &self.rec, *curr_level, curr_score);
                     }
                     else {
-                        self.content = Self::set_modern_game_view(self.padding, &self.rec, &username, *curr_level, curr_score);
+                        self.content = Self::set_modern_game_view(self.padding, &self.rec, *curr_level, curr_score);
                     }
                     self.game_started = true;
 
@@ -143,7 +143,7 @@ impl SideBar {
                         1 => Mode::Modern,
                         _ => unreachable!(),
                     };
-                    self.game = Game::new(handle, mode, (active_level + 1).try_into().unwrap(), 32);
+                    self.game = Game::new(handle, mode, (active_level + 1).try_into().unwrap(), 32, &username);
                     return self;
                 }
 
@@ -161,7 +161,6 @@ impl SideBar {
                 let _active = handle.gui_list_view(list_scores, Some(&scoreboard.formatted_highscores), &mut 0, -1);
 
                 if handle.gui_button(butt_back, Some(&lbl_butt_back)) {
-                    // println!("Showing high score!");
                     self.content = Self::set_main_game_view(self.padding, &self.rec);
                     return self;
                 }
@@ -201,6 +200,7 @@ impl SideBar {
                 let lbl_butt_quit = CString::new("QUIT GAME").unwrap();    
                 if handle.gui_button(button_quit, Some(&lbl_butt_quit)) {
                     self.content = Self::set_main_game_view(self.padding, &self.rec);
+                    self.game_started = false;
                     return self;
                 }
                 content
@@ -253,6 +253,7 @@ impl SideBar {
                 let lbl_butt_quit = CString::new("QUIT GAME").unwrap();    
                 if handle.gui_button(button_quit, Some(&lbl_butt_quit)) {
                     self.content = Self::set_main_game_view(self.padding, &self.rec);
+                    self.game_started = false;
                     return self;
                 }
                 content
@@ -327,7 +328,7 @@ impl SideBar {
         SideBarContent::HighScore { list_scores: list_scores, butt_back: button_back } 
     }
 
-    fn set_classic_game_view(padding: f32, rec: &Rectangle, username: &str, starting_level: i32, curr_score: i32) -> SideBarContent {
+    fn set_classic_game_view(padding: f32, rec: &Rectangle, starting_level: i32, curr_score: i32) -> SideBarContent {
 
         let rec_next_piece = Rectangle::new(rec.x + padding, rec.y + padding + 70.0, 
                                                    rec.width - 2.0  * padding, 
@@ -354,7 +355,7 @@ impl SideBar {
     }
 
 
-    fn set_modern_game_view(padding: f32, rec: &Rectangle, username: &str, starting_level: i32, curr_score: i32) -> SideBarContent {
+    fn set_modern_game_view(padding: f32, rec: &Rectangle, starting_level: i32, curr_score: i32) -> SideBarContent {
 
         let rec_next_piece = Rectangle::new(rec.x + padding, rec.y + padding + 70.0, 
                                                    rec.width - 2.0  * padding, 

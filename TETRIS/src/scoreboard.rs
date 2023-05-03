@@ -51,22 +51,22 @@ impl ScoreBoard {
                             .map(|highscore| format!("{}: {}", highscore.username, highscore.score))
                             .collect::<Vec<_>>()
                             .join(delimiter);
-
+        formatted = formatted.chars().filter(|&c| c != '\0').collect();
         if formatted == "" { formatted = "no highscores yet".to_owned(); }
         self.formatted_highscores = CString::new(formatted).unwrap();
     }
 
     pub fn update_highscore(&mut self, username: &str, score: i32) -> ScoreUpdated {
         let mut result = ScoreUpdated::NewHighScore;
-
-        if let Some(highscore) = self.highscores.iter_mut().find(|highscore| highscore.username == username) {
+        let uname: String = username.chars().filter(|&c| c != '\0').collect();
+        if let Some(highscore) = self.highscores.iter_mut().find(|highscore| highscore.username == uname) {
             if score > highscore.score {
                 highscore.score = score;
             } else {
                 result = ScoreUpdated::NotImproved;                
             }
         } else {
-            self.highscores.push(HighScore { username: username.to_string(), score });
+            self.highscores.push(HighScore { username: uname, score });
         }
         
         self.highscores.sort_by_key(|score| -score.score);
@@ -90,9 +90,10 @@ impl ScoreBoard {
 
     pub fn get_users_highscore(&self, username: &str) -> i32 {
         for user_score in &self.highscores {
-            let mut user_score_bytes: [u8; 64] = [0; 64];
-            user_score_bytes[..user_score.username.len()].copy_from_slice(user_score.username.as_bytes());
-            if username == std::str::from_utf8(&user_score_bytes).unwrap() {
+            //let mut user_score_bytes: [u8; 64] = [0; 64];
+            let uname: String = username.chars().filter(|&c| c != '\0').collect();
+            //user_score_bytes[..user_score.username.len()].copy_from_slice(user_score.username.as_bytes());
+            if uname == user_score.username {
                 return user_score.score;
             }
         }
