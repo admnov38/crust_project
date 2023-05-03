@@ -1,4 +1,4 @@
-use std::time::{Instant, Duration};
+use std::{time::{Instant, Duration}, cell};
 
 use raylib::prelude::*;
 
@@ -9,12 +9,6 @@ pub enum Mode {
     Modern
 }
 
-#[derive(Clone)]
-enum BoardRec {
-    Empty { pos: Vector2 },
-    Taken{ pos: Vector2, colour: Color }
-}
-
 pub struct Game {
     pub board: Rectangle, 
     pub spawn_point: Vector2,
@@ -22,15 +16,17 @@ pub struct Game {
     game_state: Vec<Vec<bool>>,
     colour: Color,
     last_fall_time: Instant,
-    fall_interval: Duration,
-    score: u32,
+    pub score: u32,
+    pub level: u32,
+    lines: u32,
+    is_running: bool
 }
 
 impl Game {
-    pub fn new(handle: &RaylibHandle, mode: Mode, block_size: i32) -> Game {
+    pub fn new(handle: &RaylibHandle, mode: Mode, level: u32, block_size: i32) -> Game {
         let board_dim: Vector2 = match mode {
             Mode::Classic => { Vector2::new(10 as f32 , 20 as f32) },
-            Mode::Modern => { Vector2::new(20 as f32, 20 as f32) }
+            Mode::Modern => { Vector2::new(15 as f32, 20 as f32) }
         };
 
         let game_board = Rectangle::new(
@@ -42,34 +38,55 @@ impl Game {
 
 
         let game_state = vec![vec![false; board_dim.x as usize]; board_dim.y as usize];
+        let spawn_point = Vector2::new((board_dim.x as i32 / 2 - 2) as f32, 0.0);
         Game { 
             board: game_board, 
-            spawn_point: Vector2::new(0.0, 0.0), 
+            spawn_point: spawn_point, 
             game_state: game_state,
             colour: Color::RED,
-            curr_piece: Tetromino::random( Vector2::new(0.0, 0.0)),
+            curr_piece: Tetromino::random(spawn_point),
             last_fall_time: Instant::now(),
-            fall_interval: Duration::from_millis(500),
             score: 0,
+            level: level,
+            lines: 0,
+            is_running: false,
         }
     }   
 
+    fn start(&mut self) {
+        self.is_running = true;
+    }
+    
+    fn pause(&mut self) {
+        self.is_running = false;
+    }
+
     pub fn update(&mut self, input: Option<KeyboardKey>) {    
+
         if let Some(key) = input {
             match key {
                 KeyboardKey::KEY_A => {
+                    if !self.is_running {
+                        return
+                    }
                     let shape = self.curr_piece.get_shape_left();
                     if !self.is_collision(shape, self.curr_piece.pos) {
                         self.curr_piece.rotate_left();
                     }
                 },
                 KeyboardKey::KEY_D => {
+                    if !self.is_running {
+                        return
+                    }
                     let shape = self.curr_piece.get_shape_right();
                     if !self.is_collision(shape, self.curr_piece.pos) {
                         self.curr_piece.rotate_right();
                     }
                 },
                 KeyboardKey::KEY_LEFT => {
+                    if !self.is_running {
+                        return
+                    }
                     let t = self.curr_piece.try_move_left();
                     let shape = t.get_shape();
                     if !self.is_collision(shape, Vector2::new(t.pos.x, t.pos.y)) {
@@ -77,17 +94,61 @@ impl Game {
                     }
                 },
                 KeyboardKey::KEY_RIGHT => {
+                    if !self.is_running {
+                        return
+                    }
                     let t = self.curr_piece.try_move_right();
                     let shape = t.get_shape();
                     if !self.is_collision(shape, Vector2::new(t.pos.x, t.pos.y)) {
                         self.curr_piece = t;
                     }
                 },
+                KeyboardKey::KEY_SPACE => {
+                    if !self.is_running {
+                        return
+                    }
+                    let shape = self.curr_piece.get_shape();
+                    while !self.is_collision(shape, self.curr_piece.pos) {
+                        self.curr_piece.pos.y += 1.0;
+                    }
+                    self.curr_piece.pos.y -= 1.0;
+                    self.lock_piece();
+                    self.clear_lines();
+                    self.curr_piece = Tetromino::random(self.spawn_point);
+                    if self.is_collision(shape, self.curr_piece.pos) {
+                        self.game_over();
+                    }
+                },
+                KeyboardKey::KEY_DOWN => {
+                    if !self.is_running {
+                        return
+                    }
+                    self.curr_piece.pos.y += 1.0;
+                    let shape = self.curr_piece.get_shape();
+                    if self.is_collision(shape, self.curr_piece.pos) {
+                        self.curr_piece.pos.y -= 1.0;
+                        self.lock_piece();
+                        self.clear_lines();
+                        self.curr_piece = Tetromino::random(self.spawn_point);
+                        if self.is_collision(shape, self.curr_piece.pos) {
+                            self.game_over();
+                        }
+                    }
+                },
+                KeyboardKey::KEY_P => {
+                    self.is_running = !self.is_running;
+                }
                 _ => (),
             }
         }
         
-        if Instant::now() - self.last_fall_time > self.fall_interval {
+        if !self.is_running {
+            return
+        }
+         
+        let fall_interval =  Duration::from_millis((1000 - self.level * 50).into());
+
+        if Instant::now() - self.last_fall_time > fall_interval {
             self.curr_piece.pos.y += 1.0;
             let shape = self.curr_piece.get_shape();
             if self.is_collision(shape, self.curr_piece.pos) {
@@ -96,14 +157,18 @@ impl Game {
                 self.clear_lines();
                 self.curr_piece = Tetromino::random(self.spawn_point);
                 if self.is_collision(shape, self.curr_piece.pos) {
-                    todo!();
+                    self.game_over();
                 }
             }
             self.last_fall_time = Instant::now();
         }
     }
 
-    fn is_collision(&self, shape: [[bool;4];4], pos: Vector2) -> bool {
+    fn game_over(&self) {
+        todo!();
+    }
+
+    fn is_collision(&self, shape: [[bool; 4]; 4], pos: Vector2) -> bool {
         for i in 0..4 {
             for j in 0..4 {
                 let x = pos.x as i32 + j;
@@ -128,17 +193,21 @@ impl Game {
 
         let empty_line = [false; 10];
 
-        for i in 0..removed {
+        for _i in 0..removed {
             self.game_state.insert(0, empty_line.to_vec())
         }
 
         self.score += match removed {
-            1 => 40,
-            2 => 100,
-            3 => 300,
-            4 => 1200,
+            1 => 40 * (self.level + 1),
+            2 => 100 * (self.level + 1),
+            3 => 300 * (self.level + 1),
+            4 => 1200 * (self.level + 1),
             _ => 0,
         };
+        self.lines += removed as u32;
+        if self.lines % 10 == 0 && removed > 0 && self.level < 15 {
+            self.level += 1;
+        }
     }
 
     fn lock_piece(&mut self) {
@@ -153,9 +222,29 @@ impl Game {
     }
 
     pub fn draw(&self, handle: &mut RaylibDrawHandle) {
-        let score_text = format!("Score: {}", self.score);
-        handle.draw_text(&score_text, 100, 100, 28, Color::RED);
+
         handle.draw_rectangle_lines_ex(self.board, 2, self.colour);
+
+        let cell_size = 32;
+        //vertical
+        for i in 0..(self.board.width as i32 / cell_size) {
+            handle.draw_line(
+                (self.board.x as i32 + i * cell_size) as i32, 
+                self.board.y as i32, 
+                (self.board.x as i32 + i * cell_size) as i32,
+                (self.board.y + self.board.height) as i32,
+                Color::RED
+            );
+        }
+        for i in 0..(self.board.height as i32 / cell_size) {
+            handle.draw_line(
+                self.board.x as i32,
+                (self.board.y as i32 + i * cell_size) as i32,
+                (self.board.x + self.board.width) as i32, 
+                (self.board.y as i32 + i * cell_size) as i32, 
+                Color::RED);
+        }
+
         let mut curr_pos = Vector2::new(self.board.x, self.board.y); 
         for row in &self.game_state {
             for val in row {
@@ -167,18 +256,18 @@ impl Game {
             curr_pos.y += 32.0;
             curr_pos.x = self.board.x;
         }
-        let kkt = &self.curr_piece;
+
         let ref_pos = Vector2::new(self.board.x, self.board.y);
-        curr_pos = Vector2::new(ref_pos.x + kkt.pos.x * 32.0, ref_pos.y + kkt.pos.y * 32.0);
-        for row in kkt.get_shape() {
+        curr_pos = Vector2::new(ref_pos.x + self.curr_piece.pos.x * 32.0, ref_pos.y + self.curr_piece.pos.y * 32.0);
+        for row in self.curr_piece.get_shape() {
             for val in row {
                 if val {
-                    handle.draw_rectangle(curr_pos.x as i32, curr_pos.y as i32, 32, 32, kkt.color);
+                    handle.draw_rectangle(curr_pos.x as i32, curr_pos.y as i32, 32, 32, self.curr_piece.color);
                 }
                 curr_pos.x += 32.0;
             }
             curr_pos.y += 32.0;
-            curr_pos.x = ref_pos.x + kkt.pos.x * 32.0;
+            curr_pos.x = ref_pos.x + self.curr_piece.pos.x * 32.0;
         }
     }
 }

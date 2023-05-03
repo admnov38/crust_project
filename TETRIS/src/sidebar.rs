@@ -1,6 +1,8 @@
 use raylib::prelude::*;
 use raylib::{rgui::RaylibDrawGui};
 use std::ffi::CString;
+use crate::game::Mode;
+use crate::{Game, game};
 
 use crate::scoreboard::{ScoreBoard};
 #[derive(Clone, Copy)]
@@ -47,7 +49,9 @@ pub struct SideBar {
     padding: f32, 
     colour: Color,
     content: SideBarContent,
-    edit_mode: bool
+    edit_mode: bool,
+    pub game: Game,
+    pub game_started: bool
 }
 
 impl SideBar {
@@ -58,18 +62,17 @@ impl SideBar {
 
         let padding = 10.0;
         let content = Self::set_main_game_view(padding, &rec);
+        let mut gameboard = Game::new(handle, game::Mode::Modern, 1, 32);
         
         return SideBar{
             rec: rec,
             padding: padding,
             colour: Color::LIGHTCYAN,
             content: content,
-            edit_mode: false
+            edit_mode: false,
+            game: gameboard,
+            game_started: false
         }
-    }
-
-    fn set_colour(&mut self, colour: Color) {
-        self.colour = colour;
     }
 
     pub fn draw(mut self, handle: &mut RaylibDrawHandle, scoreboard: &mut ScoreBoard) -> SideBar {
@@ -104,11 +107,10 @@ impl SideBar {
                     return self;
                 }
 
-                let levels = CString::new("LEVEL 1;LEVEL 2;LEVEL 3").unwrap();
+                let levels = CString::new("LEVEL 1;LEVEL 2;LEVEL 3; LEVEL 4;LEVEL 5;LEVEL 6; LEVEL 7;LEVEL 8;LEVEL 9;LEVEL 10;LEVEL 11;LEVEL 12; LEVEL 13;LEVEL 14;LEVEL 15;").unwrap();
                 let mut active_level = *curr_level;
                 active_level = handle.gui_combo_box(cb_level, Some(&levels), active_level);
                 if *curr_level != active_level {
-                    // print!("CHANGED ACTIVE LEVEL TO SOMETHING ELSE");
                     *curr_level = active_level;
                 }
 
@@ -116,7 +118,6 @@ impl SideBar {
                 let mut active_mode: i32 = *curr_mode;
                 active_mode = handle.gui_combo_box(cb_mode, Some(&levels), active_mode);
                 if *curr_mode != active_mode {
-                    // print!("CHANGED MODE TO SOMETHING ELSE");
                     *curr_mode = active_mode;
                 }
 
@@ -135,6 +136,14 @@ impl SideBar {
                     else {
                         self.content = Self::set_modern_game_view(self.padding, &self.rec, &username, *curr_level, curr_score);
                     }
+                    self.game_started = true;
+
+                    let mode = match active_mode {
+                        0 => Mode::Classic,
+                        1 => Mode::Modern,
+                        _ => unreachable!(),
+                    };
+                    self.game = Game::new(handle, mode, (active_level + 1).try_into().unwrap(), 32);
                     return self;
                 }
 
@@ -166,9 +175,12 @@ impl SideBar {
 
                 handle.draw_text(&format!("SCORE (current highscore: {})", curr_score), rec_score.x as i32, (rec_score.y - 20.0) as i32, 20, Color::BLACK);
                 handle.draw_rectangle(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::GRAY);
+                handle.draw_text(&format!("{}", self.game.score), rec_score.x as i32, rec_score.y as i32, 28, Color::RED);
+
 
                 handle.draw_text("LEVEL", rec_level.x as i32, (rec_level.y - 20.0) as i32, 20, Color::BLACK);
                 handle.draw_rectangle(rec_level.x as i32, rec_level.y as i32, rec_level.width as i32, rec_level.height as i32, Color::GRAY);
+                handle.draw_text(&format!("{}", self.game.level), rec_level.x as i32, rec_level.y as i32, 28, Color::RED);
 
 
                 let lbl_butt_quit = CString::new("QUIT GAME").unwrap();    
@@ -186,9 +198,11 @@ impl SideBar {
 
                 handle.draw_text(&format!("SCORE (current highscore: {})", curr_score), rec_score.x as i32, (rec_score.y - 20.0) as i32, 20, Color::BLACK);
                 handle.draw_rectangle(rec_score.x as i32, rec_score.y as i32, rec_score.width as i32, rec_score.height as i32, Color::GRAY);
+                handle.draw_text(&format!("{}", self.game.score), rec_score.x as i32, rec_score.y as i32, 28, Color::RED);
 
                 handle.draw_text("LEVEL", rec_level.x as i32, (rec_level.y - 20.0) as i32, 20, Color::BLACK);
                 handle.draw_rectangle(rec_level.x as i32, rec_level.y as i32, rec_level.width as i32, rec_level.height as i32, Color::GRAY);
+                handle.draw_text(&format!("{}", self.game.level), rec_level.x as i32, rec_level.y as i32, 28, Color::RED);
 
                 handle.draw_text("SWAP PIECE", rec_swap_piece.x as i32, (rec_swap_piece.y - 20.0) as i32, 20, Color::BLACK);
                 handle.draw_rectangle(rec_swap_piece.x as i32, rec_swap_piece.y as i32, rec_swap_piece.width as i32, rec_swap_piece.height as i32, Color::GRAY);
@@ -244,7 +258,7 @@ impl SideBar {
                                          rec.width - 2.0  * padding, 
                                          50.0);
 
-        let mut text = [0u8; 64];
+        let text = [0u8; 64];
 
         SideBarContent::InitGame { butt_back: button_back, 
                                    butt_start: button_start,
