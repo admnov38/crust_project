@@ -3,8 +3,6 @@ mod scoreboard;
 mod tetromino;
 mod game;
 
-use std::path::PathBuf;
-
 use raylib::prelude::*;
 use sidebar::SideBar;
 use scoreboard::ScoreBoard;

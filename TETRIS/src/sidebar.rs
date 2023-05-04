@@ -1,4 +1,3 @@
-use raylib::ffi::GuiTextBox;
 use raylib::prelude::*;
 use raylib::{rgui::RaylibDrawGui};
 use std::ffi::CString;
@@ -63,7 +62,7 @@ impl SideBar {
 
         let padding = 10.0;
         let content = Self::set_main_game_view(padding, &rec);
-        let mut gameboard = Game::new(handle, game::Mode::Modern, 1, 32, "");
+        let gameboard = Game::new(handle, game::Mode::Modern, 1, 32, "");
         
         return SideBar{
             rec: rec,
@@ -131,10 +130,10 @@ impl SideBar {
                     let username = std::str::from_utf8(text).unwrap().to_owned().clone();
                     let curr_score = scoreboard.get_users_highscore(&username);
                     if *curr_mode == 0 {
-                        self.content = Self::set_classic_game_view(self.padding, &self.rec, *curr_level, curr_score);
+                        self.content = Self::set_classic_game_view(self.padding, &self.rec, curr_score);
                     }
                     else {
-                        self.content = Self::set_modern_game_view(self.padding, &self.rec, *curr_level, curr_score);
+                        self.content = Self::set_modern_game_view(self.padding, &self.rec, curr_score);
                     }
                     self.game_started = true;
 
@@ -328,7 +327,7 @@ impl SideBar {
         SideBarContent::HighScore { list_scores: list_scores, butt_back: button_back } 
     }
 
-    fn set_classic_game_view(padding: f32, rec: &Rectangle, starting_level: i32, curr_score: i32) -> SideBarContent {
+    fn set_classic_game_view(padding: f32, rec: &Rectangle, curr_score: i32) -> SideBarContent {
 
         let rec_next_piece = Rectangle::new(rec.x + padding, rec.y + padding + 70.0, 
                                                    rec.width - 2.0  * padding, 
@@ -355,7 +354,7 @@ impl SideBar {
     }
 
 
-    fn set_modern_game_view(padding: f32, rec: &Rectangle, starting_level: i32, curr_score: i32) -> SideBarContent {
+    fn set_modern_game_view(padding: f32, rec: &Rectangle, curr_score: i32) -> SideBarContent {
 
         let rec_next_piece = Rectangle::new(rec.x + padding, rec.y + padding + 70.0, 
                                                    rec.width - 2.0  * padding, 

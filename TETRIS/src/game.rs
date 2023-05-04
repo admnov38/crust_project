@@ -1,6 +1,6 @@
 use std::{time::{Instant, Duration}};
 
-use raylib::{prelude::*, ffi::ColorAlpha};
+use raylib::{prelude::*};
 
 use crate::{tetromino::Tetromino, scoreboard::{self, ScoreBoard}};
 #[derive(Clone, Copy)]
@@ -16,13 +16,13 @@ pub struct Game {
     pub spawn_point: Vector2,
     pub curr_piece: Tetromino, 
     pub next_piece: Tetromino, 
-    pub swap_piece: Tetromino, 
+    pub swap_piece: Tetromino,
+    pub score: u32,
+    pub level: u32,
+    pub username: String, 
     game_state: Vec<Vec<bool>>,
     colour: Color,
     last_fall_time: Instant,
-    pub score: u32,
-    pub level: u32,
-    pub username: String,
     lines: u32,
     is_running: bool,
     pub is_over: bool

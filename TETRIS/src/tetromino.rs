@@ -23,9 +23,6 @@ pub struct Tetromino {
 
 
 impl Tetromino {
-    pub fn new(tetromino_size: f32, spawn_point: Vector2, shape: TetrominoShape) -> Tetromino {
-        Self::generate_tetromino(shape, tetromino_size, spawn_point)
-    }
 
     pub fn random(spawn_point: Vector2) -> Tetromino {
         let mut rng = rand::thread_rng();
@@ -39,10 +36,10 @@ impl Tetromino {
             6 => TetrominoShape::Z,
             _ => panic!("Unexpected random value generated!"),
         };
-        Self::generate_tetromino(random_enum_value, 30.0, spawn_point)
+        Self::generate_tetromino(random_enum_value, spawn_point)
     } 
 
-    fn generate_tetromino(tetromino_type: TetrominoShape, size: f32, pos: Vector2) -> Tetromino {
+    fn generate_tetromino(tetromino_type: TetrominoShape, pos: Vector2) -> Tetromino {
 
         match tetromino_type {
             TetrominoShape::I => {               
@@ -57,12 +54,6 @@ impl Tetromino {
                     [true,  true,  true,  true],
                     [false, false, false, false],
                     [false, false, false, false],
-                ];
-                let left_b = [
-                    [false, false, true, false],
-                    [false, false, true, false],
-                    [false, false, true, false],
-                    [false, false, true, false],
                 ];
                 
                 return Tetromino {
@@ -246,7 +237,7 @@ impl Tetromino {
     pub fn try_move_right(&self) -> Tetromino {
         let new_pos = Vector2::new(self.pos.x + 1.0, self.pos.y);
         let orientation = self.orientation;
-        let mut new_piece = Self::generate_tetromino(self.tetormino_type, 32.0, new_pos);
+        let mut new_piece = Self::generate_tetromino(self.tetormino_type, new_pos);
         new_piece.orientation = orientation;
         new_piece
     }
@@ -254,7 +245,7 @@ impl Tetromino {
     pub fn try_move_left(&self) -> Tetromino {
         let new_pos = Vector2::new(self.pos.x - 1.0, self.pos.y);
         let orientation = self.orientation;
-        let mut new_piece = Self::generate_tetromino(self.tetormino_type, 32.0, new_pos);
+        let mut new_piece = Self::generate_tetromino(self.tetormino_type, new_pos);
         new_piece.orientation = orientation;
         new_piece    
     }
