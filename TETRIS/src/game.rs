@@ -2,7 +2,7 @@ use std::{time::{Instant, Duration}};
 
 use raylib::{prelude::*};
 
-use crate::{tetromino::Tetromino, scoreboard::{self, ScoreBoard}};
+use crate::{tetromino::Tetromino};
 #[derive(Clone, Copy)]
 pub enum Mode {
     Classic,
@@ -122,7 +122,7 @@ impl Game {
                     self.next_piece = Tetromino::random(self.spawn_point);
 
                     if self.is_collision(shape, self.curr_piece.pos) {
-                        self.game_over(handle);
+                        self.game_over();
                     }
                 },
                 KeyboardKey::KEY_DOWN => {
@@ -140,7 +140,7 @@ impl Game {
                         self.next_piece = Tetromino::random(self.spawn_point);
 
                         if self.is_collision(shape, self.curr_piece.pos) {
-                            self.game_over(handle);
+                            self.game_over();
                         }
                     }
                 },
@@ -186,14 +186,14 @@ impl Game {
                 self.curr_piece = self.next_piece;
                 self.next_piece = Tetromino::random(self.spawn_point);
                 if self.is_collision(shape, self.curr_piece.pos) {
-                    self.game_over(handle);
+                    self.game_over();
                 }
             }
             self.last_fall_time = Instant::now();
         }
     }
 
-    fn game_over(&mut self, handle: &mut RaylibDrawHandle) {
+    fn game_over(&mut self) {
         self.is_running = false;
         self.is_over = true;
     }

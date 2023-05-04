@@ -104,7 +104,7 @@ impl SideBar {
                     return self;
                 }
 
-                let levels = CString::new("LEVEL 1;LEVEL 2;LEVEL 3; LEVEL 4;LEVEL 5;LEVEL 6; LEVEL 7;LEVEL 8;LEVEL 9;LEVEL 10;LEVEL 11;LEVEL 12; LEVEL 13;LEVEL 14;LEVEL 15;").unwrap();
+                let levels = CString::new("LEVEL 1;LEVEL 2;LEVEL 3; LEVEL 4;LEVEL 5;LEVEL 6; LEVEL 7;LEVEL 8;LEVEL 9;LEVEL 10;LEVEL 11;LEVEL 12; LEVEL 13;LEVEL 14;LEVEL 15").unwrap();
                 let mut active_level = *curr_level;
                 active_level = handle.gui_combo_box(cb_level, Some(&levels), active_level);
                 if *curr_level != active_level {
